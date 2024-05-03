@@ -1,91 +1,57 @@
 package com.example.bananashop
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.google.zxing.integration.android.IntentIntegrator
 
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMainBinding
-
-    companion object {
-        private const val CAMERA_PERMISSION_REQUEST_CODE = 200
-    }
-
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        val navView: BottomNavigationView = binding.navView
-
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        val appBarConfiguration = AppBarConfiguration(setOf(
-            R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications))
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
-
-        // Verificar permiso de cámara
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_REQUEST_CODE
-            )
-        } else {
-            startQRScanner()
+        setContent {
+            MyApplicationTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    QRScannerButton(this)
+                }
+            }
         }
     }
+}
 
-    private fun startQRScanner() {
-        IntentIntegrator(this).initiateScan()
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
+@Composable
+fun QRScannerButton(activity: ComponentActivity) {
+    Button(
+        onClick = {
+            // Abrir el escáner QR
+            val integrator = IntentIntegrator(activity)
+            integrator.setPrompt("Escanea un código QR")
+            integrator.initiateScan()
+        },
+        modifier = Modifier.padding(16.dp)
     ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startQRScanner()
-            } else {
-                Toast.makeText(
-                    this,
-                    "La aplicación necesita permiso para acceder a la cámara.",
-                    Toast.LENGTH_SHORT
-                ).show()
-                finish()
-            }
-        }
+        Text(text = "Escanear QR")
     }
+}
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
-        if (result != null) {
-            if (result.contents == null) {
-                Toast.makeText(this, "Escaneo cancelado", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Contenido del código QR: ${result.contents}", Toast.LENGTH_LONG).show()
-                Log.d("QRCodeScanner", "QR Code Contents: ${result.contents}")
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data)
-        }
+@Preview(showBackground = true)
+@Composable
+fun QRScannerButtonPreview() {
+    MyApplicationTheme {
+        QRScannerButton(ComponentActivity())
     }
 }
